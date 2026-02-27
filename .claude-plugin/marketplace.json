@@ -32,19 +32,8 @@
   "plugins": [
     {
       "name": "suricata-rules",
-      "type": "plugin",
-      "description": "Write, explain, and validate Suricata network intrusion detection signatures",
-      "path": "plugins/suricata-rules",
-      "skills": [
-        {
-          "name": "explain",
-          "description": "Explain the meaning and purpose of Suricata signatures with detailed breakdowns"
-        },
-        {
-          "name": "writer",
-          "description": "Write and validate Suricata signatures following best practices"
-        }
-      ]
+      "source": "plugins/suricata-rules",
+      "description": "Write, explain, and validate Suricata network intrusion detection signatures"
     }
   ]
 }
