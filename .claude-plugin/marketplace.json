@@ -7,6 +7,9 @@
     "name": "Stamus Networks",
     "url": "https://www.stamus-networks.com/"
   },
+  "owner": {
+    "name": "Stamus Networks"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/stamus-networks/stamus-ai-tools"
@@ -26,7 +29,7 @@
     "security",
     "networking"
   ],
-  "tools": [
+  "plugins": [
     {
       "name": "suricata-rules",
       "type": "plugin",
