@@ -32,7 +32,7 @@
   "plugins": [
     {
       "name": "suricata-rules",
-      "source": "plugins/suricata-rules",
+      "source": "./plugins/suricata-rules",
       "description": "Write, explain, and validate Suricata network intrusion detection signatures"
     }
   ]
