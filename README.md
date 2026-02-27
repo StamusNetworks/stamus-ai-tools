@@ -102,7 +102,7 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 
 ## License
 
-[Add your license here]
+Apache 2.0 License. See [LICENSE](LICENSE) for details.
 
 ## About Stamus Networks
 
