@@ -4,7 +4,7 @@ A collection of AI-powered tools for network security professionals, featuring S
 
 ## Overview
 
-This repository provides Claude Code plugins and integrations designed to streamline network security operations, with a focus on Suricata intrusion detection signatures and network defense and response workflows.
+This repository provides Claude Code plugins and integrations designed to streamline network security operations, with a focus on Suricata intrusion detection signatures and network defense and response workflows. Skills can also be used with other tools and platforms.
 
 ## Tools
 
@@ -65,7 +65,7 @@ claude-code plugin install ./plugins/suricata-rules
 Use the `explain` skill to understand what a signature does:
 
 ```
-/skill suricata-rules:explain
+/suricata-rules:explain
 
 [Paste your Suricata rule here]
 ```
@@ -77,7 +77,7 @@ Claude will provide a detailed breakdown of the signature's purpose, components,
 Use the `writer` skill to create new signatures:
 
 ```
-/skill suricata-rules:writer
+/suricata-rules:writer
 
 I need a signature to detect DNS queries to malicious-domain.com
 ```
