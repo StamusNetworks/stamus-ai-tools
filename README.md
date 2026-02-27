@@ -1,0 +1,115 @@
+# Stamus AI Tools
+
+A collection of AI-powered tools for network security professionals, featuring Suricata signature management and integration with Stamus Clear NDR platform.
+
+## Overview
+
+This repository provides Claude Code plugins and integrations designed to streamline network security operations, with a focus on Suricata intrusion detection signatures and network defense and response workflows.
+
+## Tools
+
+### Suricata Rules Plugin
+
+A comprehensive Claude Code plugin for working with Suricata network intrusion detection signatures.
+
+**Skills:**
+
+- **explain** - Get detailed explanations of Suricata signatures
+  - Breaks down signature components (protocol, IPs, ports, content matching)
+  - Explains the purpose and threat context
+  - Clarifies traffic direction (inbound vs outbound)
+  - Provides links to keyword documentation
+
+- **writer** - Write and validate Suricata signatures following best practices
+  - Generates signatures with proper syntax
+  - Validates rules using `suricata-language-server`
+  - Enforces best practices (no deprecated modifiers, proper metadata, etc.)
+  - Includes automatic syntax checking and warnings
+
+**Features:**
+
+- Interactive signature creation with validation
+- Detailed signature analysis and explanation
+- Integration with `suricata-language-server` for syntax checking
+- Best practices enforcement (metadata, thresholds, domain transforms)
+- Support for both containerized and local Suricata installations
+
+## Installation
+
+### Prerequisites
+
+For the Suricata Rules plugin, you'll need:
+
+- Python 3.x
+- `suricata-language-server` (install via pip)
+
+```bash
+pip install suricata-language-server
+```
+
+If Suricata is not installed locally, you can use the containerized version with the `--container` flag.
+
+### Installing the Plugin
+
+1. Clone this repository
+2. Install the Suricata Rules plugin in Claude Code:
+
+```bash
+claude-code plugin install ./plugins/suricata-rules
+```
+
+## Usage
+
+### Explaining Suricata Signatures
+
+Use the `explain` skill to understand what a signature does:
+
+```
+/skill suricata-rules:explain
+
+[Paste your Suricata rule here]
+```
+
+Claude will provide a detailed breakdown of the signature's purpose, components, and threat context.
+
+### Writing Suricata Signatures
+
+Use the `writer` skill to create new signatures:
+
+```
+/skill suricata-rules:writer
+
+I need a signature to detect DNS queries to malicious-domain.com
+```
+
+Claude will generate a properly formatted signature, validate it, and ensure it follows best practices.
+
+## Best Practices
+
+The Suricata Rules plugin enforces these best practices:
+
+- **No warnings or errors** - All signatures are validated with `suricata-language-server`
+- **No deprecated modifiers** - Content modifier keywords are not used
+- **Clear messages** - Rule messages are concise (<100 chars) and descriptive
+- **Proper metadata** - Includes `created_at`, `updated_at`, and `written_by` fields
+- **Threshold configuration** - Repeated actions include thresholds to limit alerts
+- **Domain transforms** - Domain matching uses proper transforms
+- **Direction awareness** - Proper use of `$HOME_NET` and `$EXTERNAL_NET`
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues or pull requests.
+
+## License
+
+[Add your license here]
+
+## About Stamus Networks
+
+Stamus Networks is dedicated to providing advanced network security solutions. Learn more at [stamus-networks.com](https://www.stamus-networks.com/).
+
+## Support
+
+For issues or questions:
+- Open an issue on GitHub
+- Visit [Stamus Networks Support](https://www.stamus-networks.com/support)

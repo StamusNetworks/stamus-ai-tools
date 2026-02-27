@@ -1,0 +1,47 @@
+{
+  "name": "stamus-ai-tools",
+  "displayName": "Stamus AI Tools",
+  "description": "A collection of AI-powered tools for network security, including Suricata signature management and Clear NDR integration.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Stamus Networks",
+    "url": "https://www.stamus-networks.com/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stamus-networks/stamus-ai-tools"
+  },
+  "keywords": [
+    "suricata",
+    "network-security",
+    "intrusion-detection",
+    "IDS",
+    "NDR",
+    "threat-detection",
+    "signatures",
+    "rules",
+    "network-monitoring"
+  ],
+  "categories": [
+    "security",
+    "networking"
+  ],
+  "tools": [
+    {
+      "name": "suricata-rules",
+      "type": "plugin",
+      "description": "Write, explain, and validate Suricata network intrusion detection signatures",
+      "path": "plugins/suricata-rules",
+      "skills": [
+        {
+          "name": "explain",
+          "description": "Explain the meaning and purpose of Suricata signatures with detailed breakdowns"
+        },
+        {
+          "name": "writer",
+          "description": "Write and validate Suricata signatures following best practices"
+        }
+      ]
+    }
+  ]
+}
