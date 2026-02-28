@@ -4,11 +4,16 @@ A collection of AI-powered tools for network security professionals, featuring S
 
 ## Overview
 
-This repository provides Claude Code plugins and integrations designed to streamline network security operations, with a focus on Suricata intrusion detection signatures and network defense and response workflows. Skills can also be used with other tools and platforms.
+This repository provides skills and integrations designed to streamline network security operations, with a focus on Suricata
+intrusion detection signatures and network defense and response workflows.
+
+The skills can be used within AI agents to automate tasks such as signature analysis, creation, and validation. The repository
+is structured to be a Claude Code plugin, making it easy to integrate into your existing AI workflows.
+
 
 ## Tools
 
-### Suricata Rules Plugin
+### Suricata Rules Plugin for Claude Code
 
 A comprehensive Claude Code plugin for working with Suricata network intrusion detection signatures.
 
@@ -49,7 +54,21 @@ pip install suricata-language-server
 
 If Suricata is not installed locally, you can use the containerized version with the `--container` flag.
 
-### Installing the Plugin
+### Installing the Claude Code Plugin
+
+#### From Claude Code Marketplace
+
+You can add the plugin directly from the Claude Code marketplace:
+```
+/plugin marketplace add StamusNetworks/stamus-ai-tools
+```
+Then you can install the Suricata Rules plugin:
+
+```
+/plugin install suricata-rules@stamus-ai-tools
+```
+
+#### Manual Installation
 
 1. Clone this repository
 2. Install the Suricata Rules plugin in Claude Code:
@@ -57,12 +76,23 @@ If Suricata is not installed locally, you can use the containerized version with
 ```bash
 claude-code plugin install ./plugins/suricata-rules
 ```
+### Installation for other AI agents
+
+
+1. Clone this repository
+2. Copy the directories containing the skills you want to use into your AI agent's plugin directory
+
+For example, with OpenCode:
+
+```bash
+cp -r ./plugins/suricata-rules/* ~/.opencode/plugins/
+```
 
 ## Usage
 
 ### Explaining Suricata Signatures
 
-Use the `explain` skill to understand what a signature does:
+Use the `explain` skill to understand what a signature does. For example in Claude Code:
 
 ```
 /suricata-rules:explain
@@ -70,11 +100,11 @@ Use the `explain` skill to understand what a signature does:
 [Paste your Suricata rule here]
 ```
 
-Claude will provide a detailed breakdown of the signature's purpose, components, and threat context.
+The AI agent will provide a detailed breakdown of the signature's purpose, components, and threat context.
 
 ### Writing Suricata Signatures
 
-Use the `writer` skill to create new signatures:
+Use the `writer` skill to create new signatures. For example in Claude Code:
 
 ```
 /suricata-rules:writer
@@ -82,7 +112,7 @@ Use the `writer` skill to create new signatures:
 I need a signature to detect DNS queries to malicious-domain.com
 ```
 
-Claude will generate a properly formatted signature, validate it, and ensure it follows best practices.
+The AI agent will generate a properly formatted signature, validate it, and ensure it follows best practices.
 
 ## Best Practices
 
