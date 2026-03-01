@@ -25,8 +25,7 @@ When writing signatures for Suricata, always check the result of the signatures
 with `suricata-language-server --batch-file <file>` to check for syntax errors
 and warnings.
 
-To know the available options for writing signatures, list the keywords
-with `suricata-language-server --list-keywords`. You can follow the links
+List the available keywords with `suricata-language-server --list-keywords`. You can follow the links
 to the documentation in the output to get more information about each keyword.
 
 Set of rules when writing signature for Suricata:
@@ -44,11 +43,15 @@ Set of rules when writing signature for Suricata:
 - Ask the user about its identity if needed to be able to add the `written_by` metadata field in the signature.
 - Always set the application protocol in the signature as the second parameter of the rule (e.g., http, tls, smb) if possible.
 - Whatever the concept, always check if there is a keyword that can be used to write the signature in a more efficient way.
+- Content match should have more than one character.
+- 
 
 Additional rules for specific types of signatures:
 - Signature matching on a domain name should use the domain transform to ensure proper matching of the domain name in the traffic. Don't do that for the hostname.
 - When signature match on something on the internet, use $EXTERNAL_NET and $HOME_NET variables in the signature for <src> or <dst>.
 - A policy violation signature can be outbound if it is from $HOME_NET to $EXTERNAL_NET, but it can also be inbound if it is from $EXTERNAL_NET to $HOME_NET. In that case, the signature should be written in both directions.
+- You can use flowbits in a set of signatures to create a condition that can be used in another signature.
+- Always prefer match that are not user input when possible (e.g. match on file content instead of file name)
 
 ## Tools
 
