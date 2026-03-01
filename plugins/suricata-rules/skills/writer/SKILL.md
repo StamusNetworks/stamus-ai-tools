@@ -14,7 +14,7 @@ alert <proto> <src> <sport> -> <dst> <dport> ( msg:"..."; flow:...; <sticky buff
 ```
 
 Key ideas:
-- `proto` is the protocol to match (e.g., tcp, udp, http, tls, smb).
+- `proto` is the protocol to match (e.g., tcp, udp, http, tls, smb). Use application layer if possible (e.g., http, tls, smb) and use `any` for the port specification.
 - `sid` is a unique rule id.
 - `rev` is the rule revision.
 - Use `flow:established,to_server` (or similar) to constrain direction/state.
@@ -43,7 +43,7 @@ Set of rules when writing signature for Suricata:
 - Sticky buffer are setting a context so multiple match conditions can be applied after using a sticky buffer.
 - Ask the user about its identity if needed to be able to add the `written_by` metadata field in the signature.
 - Always set the application protocol in the signature as the second parameter of the rule (e.g., http, tls, smb) if possible.
-- If application layer is set then use `any` for the port specification.
+- Whatever the concept, always check if there is a keyword that can be used to write the signature in a more efficient way.
 
 Additional rules for specific types of signatures:
 - Signature matching on a domain name should use the domain transform to ensure proper matching of the domain name in the traffic. Don't do that for the hostname.
