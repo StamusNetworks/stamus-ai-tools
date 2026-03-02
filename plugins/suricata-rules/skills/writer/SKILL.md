@@ -28,6 +28,8 @@ and warnings.
 List the available keywords with `suricata-language-server --list-keywords`. You can follow the links
 to the documentation in the output to get more information about each keyword.
 
+List the available application layer with `suricata-language-server --list-app-layer-protos`.
+
 Set of rules when writing signature for Suricata:
 - A signature is not correct if it has any warning or errors when checked with `suricata-language-server --batch-file <file>`.
 - Signatures should not use content modifiers keywords as they are deprecated.
