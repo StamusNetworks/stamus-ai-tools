@@ -46,7 +46,7 @@ A comprehensive Claude Code plugin for working with Suricata network intrusion d
 For the Suricata Rules plugin, you'll need:
 
 - Python 3.x
-- `suricata-language-server` (install via pip)
+- `suricata-language-server` >= 2.0.0 (install via pip)
 
 ```bash
 pip install suricata-language-server
