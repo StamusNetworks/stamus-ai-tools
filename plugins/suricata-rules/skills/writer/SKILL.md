@@ -14,7 +14,7 @@ alert <proto> <src> <sport> -> <dst> <dport> ( msg:"..."; flow:...; <sticky buff
 ```
 
 Key ideas:
-- `proto` is application layer (e.g., http, tls, smb) or is transport layer (e.g., tcp, udp). Always prefer application layer when possible.
+- `proto` is application layer (e.g., http, tls, smb) or is transport layer (e.g., tcp, udp). Always set application layer in second position of the signature when possible.
 - `sid` is a unique rule id.
 - `rev` is the rule revision.
 - Use `flow:established,to_server` (or similar) to constrain direction/state.
