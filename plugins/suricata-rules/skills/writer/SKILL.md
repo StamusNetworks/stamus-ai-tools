@@ -14,7 +14,7 @@ alert <proto> <src> <sport> -> <dst> <dport> ( msg:"..."; flow:...; <sticky buff
 ```
 
 Key ideas:
-- `proto` is the protocol to match (e.g., tcp, udp, http, tls, smb). Use application layer if possible (e.g., http, tls, smb) and use `any` for the port specification.
+- `proto` is application layer (e.g., http, tls, smb) or is transport layer (e.g., tcp, udp). Always prefer application layer when possible.
 - `sid` is a unique rule id.
 - `rev` is the rule revision.
 - Use `flow:established,to_server` (or similar) to constrain direction/state.
