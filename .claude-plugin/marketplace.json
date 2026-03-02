@@ -2,7 +2,7 @@
   "name": "stamus-ai-tools",
   "displayName": "Stamus AI Tools",
   "description": "A collection of AI-powered tools for network security, including Suricata signature management and Clear NDR integration.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": {
     "name": "Stamus Networks",
     "url": "https://www.stamus-networks.com/"
