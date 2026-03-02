@@ -68,3 +68,15 @@ If `suricata` binary is not available on the system uses `--container` option to
 ```
 suricata-language-server --container --batch-file <file>
 ```
+
+## Interaction with PCAP trace
+
+You can ask to the user if a pcap file is available to test the signature on and
+then inject the path to the pcap file with the following comment (at beginning of the
+signature file):
+
+```
+## SLS pcap-file: <path to pcap file>
+```
+
+Then `suricata-language-server` will automatically test the signature on the pcap file and provide the result of the test in the output of the command.
