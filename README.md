@@ -41,21 +41,21 @@ A comprehensive Claude Code plugin for working with Suricata network intrusion d
 
 ### Suricata Analyze Plugin for Claude Code
 
-A powerful Claude Code plugin for analyzing network traffic using Suricata tools, with unified support for both PCAP files and EVE JSON logs.
+A powerful Claude Code plugin for inspecting network traffic using Suricata tools, with unified support for both PCAP files and EVE JSON logs.
 
 **Skill:**
 
-- **analyze** - Unified network traffic analysis for PCAP files and EVE JSON logs
+- **inspect** - Unified network traffic inspection for PCAP files and EVE JSON logs
   - Automatically detects input type (PCAP or EVE JSON)
   - Processes PCAP files using the `suricata-read` command to generate EVE JSON
-  - Analyzes EVE JSON logs directly for security events and traffic patterns
+  - Inspects EVE JSON logs directly for security events and traffic patterns
   - Supports protocol analysis (HTTP, TLS, DNS, SMB, SSH, etc.)
   - Optional rules file integration for detection testing with PCAPs
   - Container mode support for environments without local Suricata installation
 
 **Features:**
 
-- Unified workflow for PCAP and EVE log analysis
+- Unified workflow for PCAP and EVE log inspection
 - Comprehensive PCAP processing with `suricata-read`
 - EVE log parsing and security event investigation
 - Protocol distribution and traffic pattern analysis
@@ -143,24 +143,24 @@ I need a signature to detect DNS queries to malicious-domain.com
 
 The AI agent will generate a properly formatted signature, validate it, and ensure it follows best practices.
 
-### Analyzing Network Traffic
+### Inspecting Network Traffic
 
-Use the `analyze` skill to work with both PCAP files and EVE JSON logs. For example in Claude Code:
+Use the `inspect` skill to work with both PCAP files and EVE JSON logs. For example in Claude Code:
 
-**Analyzing PCAP Files:**
+**Inspecting PCAP Files:**
 
 ```
-/suricata-analyze:analyze
+/suricata-analyze:inspect
 
 Analyze traffic.pcap and show me the protocol distribution
 ```
 
 The AI agent will process the PCAP file using `suricata-read`, extract network events in JSON format, and provide insights about the traffic.
 
-**Analyzing EVE JSON Logs:**
+**Inspecting EVE JSON Logs:**
 
 ```
-/suricata-analyze:analyze
+/suricata-analyze:inspect
 
 Investigate the alerts in eve.json and identify the top threats
 ```
@@ -170,7 +170,7 @@ The AI agent will parse the EVE log file, analyze security events, and provide a
 **Testing Rules Against PCAPs:**
 
 ```
-/suricata-analyze:analyze
+/suricata-analyze:inspect
 
 Test my-rules.rules against sample.pcap
 ```

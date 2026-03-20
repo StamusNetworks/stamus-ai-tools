@@ -1,10 +1,10 @@
 # Suricata Analyze Plugin Instructions
 
-This plugin provides a unified skill for analyzing network traffic using Suricata tools, supporting both PCAP file analysis and EVE JSON log analysis in a single workflow.
+This plugin provides a unified skill for inspecting network traffic using Suricata tools, supporting both PCAP file analysis and EVE JSON log analysis in a single workflow.
 
 ## When to Use This Plugin
 
-Automatically invoke the `suricata-analyze:analyze` skill when users:
+Automatically invoke the `suricata-analyze:inspect` skill when users:
 
 ### Network Traffic Analysis Requests
 - User provides a PCAP file and wants to analyze it
@@ -99,40 +99,40 @@ The skill follows this decision tree:
 
 This plugin complements the `suricata-rules` plugin:
 - Use `suricata-rules:writer` to create detection rules
-- Use `suricata-analyze:analyze` to test those rules against sample traffic (PCAP)
-- Use `suricata-analyze:analyze` to investigate the alerts generated (EVE logs)
+- Use `suricata-analyze:inspect` to test those rules against sample traffic (PCAP)
+- Use `suricata-analyze:inspect` to investigate the alerts generated (EVE logs)
 
 ## Common Workflows
 
 ### Workflow 1: Rule Development and Testing
 1. User writes rules with `suricata-rules:writer`
-2. User tests rules: `suricata-analyze:analyze` processes PCAP with rules file
+2. User tests rules: `suricata-analyze:inspect` processes PCAP with rules file
 3. User analyzes the results (alerts) from the EVE JSON output
 
 ### Workflow 2: Incident Investigation
 1. User provides eve.json from a Suricata sensor
-2. Use `suricata-analyze:analyze` to investigate alerts and events
+2. Use `suricata-analyze:inspect` to investigate alerts and events
 3. Identify suspicious activity and provide recommendations
 
 ### Workflow 3: Traffic Baseline Analysis
 1. User provides a PCAP file of unknown traffic
-2. Use `suricata-analyze:analyze` to extract protocol information
+2. Use `suricata-analyze:inspect` to extract protocol information
 3. Summarize findings: protocol distribution, top talkers, services
 
 ### Workflow 4: Threat Hunting
 1. User provides EVE logs or PCAP from a suspect system
-2. Use `suricata-analyze:analyze` to hunt for indicators
+2. Use `suricata-analyze:inspect` to hunt for indicators
 3. Examine DNS queries, TLS certificates, large transfers, suspicious patterns
 4. Report findings with evidence
 
 ## Proactive Behavior
 
 When users mention:
-- PCAP files, packet captures, or network traffic files → Invoke `suricata-analyze:analyze`
-- EVE logs, eve.json, Suricata logs, or JSON logs → Invoke `suricata-analyze:analyze`
-- Network traffic analysis → Invoke `suricata-analyze:analyze`
-- Suricata alerts or events → Invoke `suricata-analyze:analyze`
-- Testing rules against traffic → Invoke `suricata-analyze:analyze`
-- Protocol analysis, traffic investigation → Invoke `suricata-analyze:analyze`
+- PCAP files, packet captures, or network traffic files → Invoke `suricata-analyze:inspect`
+- EVE logs, eve.json, Suricata logs, or JSON logs → Invoke `suricata-analyze:inspect`
+- Network traffic analysis → Invoke `suricata-analyze:inspect`
+- Suricata alerts or events → Invoke `suricata-analyze:inspect`
+- Testing rules against traffic → Invoke `suricata-analyze:inspect`
+- Protocol analysis, traffic investigation → Invoke `suricata-analyze:inspect`
 
 Always prefer using this specialized skill over attempting to analyze network traffic or logs without it, as it contains essential domain knowledge, best practices, and structured analysis approaches for both PCAP and EVE JSON formats.
