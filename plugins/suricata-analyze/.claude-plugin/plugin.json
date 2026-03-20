@@ -1,0 +1,9 @@
+{
+    "name": "suricata-analyze",
+    "description": "A plugin to analyze network traffic using Suricata, supporting both PCAP files and eve.json logs.",
+    "version": "1.0.0",
+    "license": "Apache-2.0",
+    "author": {
+        "name": "Stamus Networks"
+    }
+}

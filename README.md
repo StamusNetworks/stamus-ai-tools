@@ -39,11 +39,36 @@ A comprehensive Claude Code plugin for working with Suricata network intrusion d
 - Best practices enforcement (metadata, thresholds, domain transforms)
 - Support for both containerized and local Suricata installations
 
+### Suricata Analyze Plugin for Claude Code
+
+A powerful Claude Code plugin for analyzing network traffic using Suricata tools, with unified support for both PCAP files and EVE JSON logs.
+
+**Skill:**
+
+- **analyze** - Unified network traffic analysis for PCAP files and EVE JSON logs
+  - Automatically detects input type (PCAP or EVE JSON)
+  - Processes PCAP files using the `suricata-read` command to generate EVE JSON
+  - Analyzes EVE JSON logs directly for security events and traffic patterns
+  - Supports protocol analysis (HTTP, TLS, DNS, SMB, SSH, etc.)
+  - Optional rules file integration for detection testing with PCAPs
+  - Container mode support for environments without local Suricata installation
+
+**Features:**
+
+- Unified workflow for PCAP and EVE log analysis
+- Comprehensive PCAP processing with `suricata-read`
+- EVE log parsing and security event investigation
+- Protocol distribution and traffic pattern analysis
+- Alert triage and incident response support
+- Threat hunting capabilities (DNS, TLS, large transfers, suspicious patterns)
+- jq-based filtering and aggregation examples
+- Support for both containerized and local Suricata installations
+
 ## Installation
 
 ### Prerequisites
 
-For the Suricata Rules plugin, you'll need:
+For the Suricata plugins, you'll need:
 
 - Python 3.x
 - `suricata-language-server` >= 2.0.0 (install via pip)
@@ -52,32 +77,33 @@ For the Suricata Rules plugin, you'll need:
 pip install suricata-language-server
 ```
 
-If Suricata is not installed locally, you can use the containerized version with the `--container` flag.
+If Suricata is not installed locally, you can use the containerized version with the `--container` flag for both plugins.
 
 ### Installing the Claude Code Plugin
 
 #### From Claude Code Marketplace
 
-You can add the plugin directly from the Claude Code marketplace:
+You can add the plugins directly from the Claude Code marketplace:
 ```
 /plugin marketplace add StamusNetworks/stamus-ai-tools
 ```
-Then you can install the Suricata Rules plugin:
+Then you can install the desired plugins:
 
 ```
 /plugin install suricata-rules@stamus-ai-tools
+/plugin install suricata-analyze@stamus-ai-tools
 ```
 
 #### Manual Installation
 
 1. Clone this repository
-2. Install the Suricata Rules plugin in Claude Code:
+2. Install the desired plugins in Claude Code:
 
 ```bash
 claude-code plugin install ./plugins/suricata-rules
+claude-code plugin install ./plugins/suricata-analyze
 ```
 ### Installation for other AI agents
-
 
 1. Clone this repository
 2. Copy the directories containing the skills you want to use into your AI agent's plugin directory
@@ -86,11 +112,14 @@ For example, with OpenCode:
 
 ```bash
 cp -r ./plugins/suricata-rules/* ~/.opencode/plugins/
+cp -r ./plugins/suricata-analyze/* ~/.opencode/plugins/
 ```
 
 ## Usage
 
-### Explaining Suricata Signatures
+### Working with Suricata Signatures
+
+#### Explaining Suricata Signatures
 
 Use the `explain` skill to understand what a signature does. For example in Claude Code:
 
@@ -102,7 +131,7 @@ Use the `explain` skill to understand what a signature does. For example in Clau
 
 The AI agent will provide a detailed breakdown of the signature's purpose, components, and threat context.
 
-### Writing Suricata Signatures
+#### Writing Suricata Signatures
 
 Use the `writer` skill to create new signatures. For example in Claude Code:
 
@@ -113,6 +142,40 @@ I need a signature to detect DNS queries to malicious-domain.com
 ```
 
 The AI agent will generate a properly formatted signature, validate it, and ensure it follows best practices.
+
+### Analyzing Network Traffic
+
+Use the `analyze` skill to work with both PCAP files and EVE JSON logs. For example in Claude Code:
+
+**Analyzing PCAP Files:**
+
+```
+/suricata-analyze:analyze
+
+Analyze traffic.pcap and show me the protocol distribution
+```
+
+The AI agent will process the PCAP file using `suricata-read`, extract network events in JSON format, and provide insights about the traffic.
+
+**Analyzing EVE JSON Logs:**
+
+```
+/suricata-analyze:analyze
+
+Investigate the alerts in eve.json and identify the top threats
+```
+
+The AI agent will parse the EVE log file, analyze security events, and provide a comprehensive investigation report.
+
+**Testing Rules Against PCAPs:**
+
+```
+/suricata-analyze:analyze
+
+Test my-rules.rules against sample.pcap
+```
+
+The AI agent will run `suricata-read` with the rules file, generate alerts, and report which signatures triggered.
 
 ## Best Practices
 
