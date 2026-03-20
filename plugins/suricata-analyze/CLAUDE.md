@@ -85,12 +85,18 @@ The skill follows this decision tree:
    - File extension `.json` or filename contains `eve` → Analyze directly
    - If unclear, ask the user
 
-2. **Process if needed**:
+2. **Proactively check for Suricata rules** (for PCAP files):
+   - **IMPORTANT**: Always search for `.rules` files in the current directory and subdirectories
+   - Present any found rules files to the user and ask if they want to load them
+   - If no rules found, still ask if the user has rules they want to use
+   - Explain the benefit: loading rules enables threat detection and alert generation
+
+3. **Process if needed**:
    - PCAP: Run `suricata-read` (with `--container` if Suricata not installed locally)
-   - Optional: Include `--rules-file` if user wants detection testing
+   - Include `--rules-file` parameter if user wants detection (based on step 2)
    - Output EVE JSON to a file or pipe for analysis
 
-3. **Analyze EVE JSON**:
+4. **Analyze EVE JSON**:
    - Parse events by type
    - Extract relevant information based on user's question
    - Present findings with context and recommendations

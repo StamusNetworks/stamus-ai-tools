@@ -25,11 +25,21 @@ When a user asks for network traffic analysis:
    - File extension `.json`, or filename contains `eve` → EVE log (ready to analyze)
    - If unclear, ask the user what type of file they have
 
-2. **Process if needed**:
+2. **Check for Suricata rules** (IMPORTANT for PCAP files):
+   - **Always ask the user** if they want to load Suricata signatures/rules when processing a PCAP
+   - **Proactively search** for rule files in the current directory and subdirectories (use Glob tool to find `*.rules` files)
+   - If rule files are found, **present them as options** and ask which one(s) to use
+   - If no rule files are found, still ask if the user has rules they want to use
+   - Loading rules enables **detection capabilities** and generates alert events in the output
+   - This is especially valuable for testing signatures or hunting for known threats
+
+3. **Process if needed**:
    - PCAP files: Run `suricata-read` first to generate EVE JSON
+     - Include `--rules-file` parameter if user wants detection
+     - Can specify multiple rules files if needed
    - EVE logs: Skip directly to analysis
 
-3. **Analyze the EVE JSON data**:
+4. **Analyze the EVE JSON data**:
    - Parse events, filter by type, extract insights
    - Present findings to the user
 
@@ -63,17 +73,34 @@ suricata-read --container <pcap_file>
 
 #### With Rules for Detection
 
-To test Suricata signatures against the PCAP:
+**IMPORTANT**: Before processing a PCAP, always ask the user about loading rules:
 
-```bash
-suricata-read --rules-file /path/to/rules.rules <pcap_file>
-```
+1. **Search for available rules files**:
+   ```bash
+   # Use Glob tool to find rules in current directory and subdirectories
+   find . -name "*.rules" -type f
+   ```
 
-Or in container mode:
+2. **Ask the user**:
+   - If rules files are found: "I found the following rules files: [list]. Would you like me to load any of these for detection analysis?"
+   - If no rules files are found: "Would you like to load any Suricata rules for detection? If so, please provide the path to the rules file."
+   - Explain the benefit: "Loading rules will enable threat detection and generate alert events."
 
-```bash
-suricata-read --container --rules-file /path/to/rules.rules <pcap_file>
-```
+3. **Process with rules**:
+   ```bash
+   suricata-read --rules-file /path/to/rules.rules <pcap_file>
+   ```
+
+   Or in container mode:
+   ```bash
+   suricata-read --container --rules-file /path/to/rules.rules <pcap_file>
+   ```
+
+**Benefits of loading rules**:
+- Generates alert events for known threats or policy violations
+- Enables signature testing and validation
+- Provides security context to the traffic analysis
+- Helps identify malicious or suspicious activity
 
 #### Output
 
@@ -288,10 +315,16 @@ jq 'select(.flow_id==1234567890)' eve.json
 **User request**: "What protocols are in traffic.pcap?"
 
 **Workflow**:
-1. Check if Suricata is installed, use `--container` if not
-2. Run: `suricata-read --container traffic.pcap > output.json`
-3. Count protocols: `jq -r '.app_proto // "unknown"' output.json | sort | uniq -c | sort -rn`
-4. Present summary: "The PCAP contains X HTTP flows, Y TLS connections, Z DNS queries..."
+1. Search for rules files: `Glob: **/*.rules` or `find . -name "*.rules"`
+2. Ask user: "I found rules.rules in the current directory. Would you like me to load it for detection analysis? This will help identify threats in the traffic."
+3. User responds (yes/no)
+4. Check if Suricata is installed, use `--container` if not
+5. Run with or without rules based on user's choice:
+   - With rules: `suricata-read --container --rules-file rules.rules traffic.pcap > output.json`
+   - Without rules: `suricata-read --container traffic.pcap > output.json`
+6. Count protocols: `jq -r '.app_proto // "unknown"' output.json | sort | uniq -c | sort -rn`
+7. If rules were loaded, also check for alerts: `jq -r 'select(.event_type=="alert") | .alert.signature' output.json | sort | uniq -c`
+8. Present summary: "The PCAP contains X HTTP flows, Y TLS connections, Z DNS queries..." (and alert summary if rules were used)
 
 ### Example 2: Test Rules Against PCAP
 
@@ -372,13 +405,33 @@ Common issues and solutions:
 
 ## Quality Standards
 
-- Always verify files exist before processing
-- Use appropriate mode (`--container` when needed)
-- Handle JSONL format correctly (one JSON object per line)
-- Provide accurate counts and statistics
-- Interpret findings in security context
-- Distinguish between true positives and false positives
-- Explain technical findings in accessible language
-- Show command examples for reproducibility
+- **Always ask about rules**: When processing PCAP files, proactively search for and offer to load Suricata rules
+- **Always verify files exist** before processing
+- **Use appropriate mode** (`--container` when needed)
+- **Handle JSONL format correctly** (one JSON object per line)
+- **Provide accurate counts and statistics**
+- **Interpret findings in security context**
+- **Distinguish between true positives and false positives**
+- **Explain technical findings in accessible language**
+- **Show command examples for reproducibility**
+
+## Proactive Rules Detection Workflow
+
+Every time you process a PCAP file, follow this mandatory workflow:
+
+1. **Before running `suricata-read`**:
+   - Use Glob tool: `find . -name "*.rules" -type f` or glob pattern `**/*.rules`
+   - Check the PCAP file's directory and parent directories
+
+2. **Present options to user**:
+   - If rules found: List them and ask which to use
+   - If no rules found: Still ask if they have rules elsewhere
+   - Explain why rules are valuable (detection, alerts, threat identification)
+
+3. **Execute with user's choice**:
+   - With rules: `suricata-read --container --rules-file <path> <pcap>`
+   - Without rules: `suricata-read --container <pcap>`
+
+This proactive approach ensures users don't miss the opportunity to enable detection capabilities and maximizes the value of the traffic inspection.
 
 Your analysis helps users detect threats, investigate incidents, understand network behavior, validate detection rules, and improve security posture.
