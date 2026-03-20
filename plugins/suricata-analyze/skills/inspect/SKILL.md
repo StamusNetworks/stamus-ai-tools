@@ -108,33 +108,51 @@ suricata-read --container <pcap_file>
 
 **IMPORTANT - Safe Processing Patterns**:
 
-1. **Prefer pipes over temporary files** (most secure):
-   ```bash
-   suricata-read file.pcap | jq '.event_type' | sort | uniq -c
-   ```
+**When to use pipes vs temporary files:**
 
-2. **If you must save output, use secure temporary files**:
-   ```bash
-   # SECURE: Use mktemp for random, secure filename
-   output_file=$(mktemp /tmp/suricata_XXXXXX.json)
-   suricata-read file.pcap > "$output_file"
-   jq '.' "$output_file"
-   rm "$output_file"  # Clean up when done
-   ```
+- **Single analysis or simple query**: Use pipes (more secure, no cleanup needed)
+- **Multiple different analyses**: Use temporary file with `mktemp` (more efficient)
+- **Large PCAP files**: Use temporary file (avoid re-processing)
+- **Rules file with many signatures**: Use temporary file (processing is expensive)
 
-3. **NEVER use predictable filenames** (UNSAFE):
-   ```bash
-   # UNSAFE - DO NOT DO THIS
-   suricata-read file.pcap > /tmp/pcap_eve.json
-   suricata-read file.pcap > /tmp/filename_eve.json
-   ```
-   This creates security vulnerabilities (race conditions, file collisions, disclosure).
+**Pattern 1: Direct pipe** (for single analysis):
+```bash
+# Best for simple, one-time queries
+suricata-read file.pcap | jq '.event_type' | sort | uniq -c
+```
 
-**Best Practices**:
-- Use pipes whenever possible to avoid filesystem operations
-- If temporary storage is needed, use `mktemp` for secure random filenames
-- Always clean up temporary files when done
-- Consider using process substitution: `jq '.' <(suricata-read file.pcap)`
+**Pattern 2: Secure temporary file** (for multiple analyses or expensive processing):
+```bash
+# RECOMMENDED when processing large PCAPs or using extensive rulesets
+# Create secure random filename
+tmpfile=$(mktemp /tmp/suricata_XXXXXX.json)
+
+# Process once, analyze many times
+suricata-read --container --rules-file rules.rules large.pcap > "$tmpfile"
+
+# Run multiple different analyses on the same data
+jq -r '.app_proto // "unknown"' "$tmpfile" | sort | uniq -c | sort -rn
+jq 'select(.event_type=="alert") | .alert.signature' "$tmpfile" | sort | uniq -c
+jq 'select(.event_type=="flow") | .flow.bytes_toclient' "$tmpfile" | jq -s 'add/length'
+
+# ALWAYS clean up when done
+rm "$tmpfile"
+```
+
+**Pattern 3: NEVER use predictable filenames** (UNSAFE):
+```bash
+# UNSAFE - DO NOT DO THIS
+suricata-read file.pcap > /tmp/pcap_eve.json
+suricata-read file.pcap > /tmp/filename_eve.json
+```
+This creates security vulnerabilities (race conditions, file collisions, disclosure).
+
+**Decision Guide**:
+- **Rules file has 10s of signatures + small PCAP**: Pipes are fine
+- **Rules file has 100s-1000s of signatures**: Use temporary file (processing is expensive)
+- **PCAP > 100MB**: Use temporary file (processing takes significant time)
+- **Need 3+ different analyses**: Use temporary file (avoid re-processing)
+- **Single quick analysis**: Use pipe (simplest and most secure)
 
 ## Part 2: EVE JSON Format
 
@@ -144,6 +162,8 @@ EVE logs use JSONL (JSON Lines) format:
 - One JSON object per line
 - Each object represents a single event
 - Self-contained and independently parseable
+
+The schema for Suricata EVE logs is available at https://raw.githubusercontent.com/OISF/suricata/refs/heads/main/etc/schema.json
 
 ### Event Types
 
@@ -158,18 +178,20 @@ EVE logs contain various event types identified by the `event_type` field:
 - **netflow**: Aggregated flow statistics
 
 #### Application Layer Protocols
+Main protocols are:
 - **http**: HTTP requests and responses
 - **tls**: TLS/SSL handshakes, certificates, and encryption details
 - **dns**: DNS queries and responses
 - **ssh**: SSH connection negotiations
 - **smb**: SMB/CIFS file sharing protocol
-- **ftp**: FTP control and data connections
+- **ftp** and **ftp-data**: FTP control and data connections
 - **smtp**: Email transmission protocol
 - **nfs**: Network File System protocol
 - **rdp**: Remote Desktop Protocol
 - **sip**: Session Initiation Protocol (VoIP)
 - **dhcp**: DHCP requests and responses
 - **krb5**: Kerberos authentication
+- **imap**: Email access protocol
 
 #### File and Data
 - **fileinfo**: Files extracted from network traffic
@@ -192,9 +214,16 @@ EVE logs contain various event types identified by the `event_type` field:
 - `alert.signature`: Rule message/description
 - `alert.signature_id`: Rule SID
 - `alert.category`: Alert classification
-- `alert.severity`: Alert priority (1=high, 2=medium, 3=low)
+- `alert.severity`: Alert priority (1=high, 2=medium, 3=low) - legacy field, less reliable
 - `alert.action`: Action taken (allowed, blocked, rejected)
-- `alert.metadata`: Rule metadata tags
+- `alert.metadata`: Rule metadata tags (IMPORTANT: Contains key contextual information)
+  - `alert.metadata.signature_severity`: Severity level ("Major", "Critical", "Minor", "Informational")
+    - **Critical**: Immediate threat requiring urgent response
+    - **Major**: Significant security concern
+    - **Minor**: Lower priority issue
+    - **Informational**: Context or policy violation
+  - This field may not always be present; check for existence before filtering
+  - **Metadata is more important than alert.severity or alert.category for triage**
 
 #### Flow-Specific Fields
 - `flow.pkts_toserver` / `flow.pkts_toclient`: Packet counts
@@ -202,6 +231,7 @@ EVE logs contain various event types identified by the `event_type` field:
 - `flow.start` / `flow.end`: Flow duration
 - `flow.state`: Connection state (established, closed, etc.)
 - `flow.reason`: Why the flow ended
+- `flow.age`: The duration of the flow in second
 
 #### Protocol-Specific Fields
 Each protocol has specialized fields:
@@ -227,14 +257,32 @@ grep -o '"app_proto":"[^"]*"' eve.json | sort | uniq -c | sort -rn
 ```
 
 #### 2. Alert Investigation
-Examine security alerts:
+
+**Filter Critical/Major Alerts by Metadata** (RECOMMENDED):
 ```bash
-jq 'select(.event_type=="alert") | {sig: .alert.signature, src: .src_ip, dst: .dest_ip}' eve.json
+# Critical alerts only
+jq 'select(.event_type=="alert" and .alert.metadata.signature_severity=="Critical")' eve.json
+
+# Critical or Major alerts
+jq 'select(.event_type=="alert" and (.alert.metadata.signature_severity=="Critical" or .alert.metadata.signature_severity=="Major"))' eve.json
+
+# Handle missing metadata gracefully (shows all alerts if field is missing)
+jq 'select(.event_type=="alert" and ((.alert.metadata.signature_severity // "") | test("Critical|Major")))' eve.json
+```
+
+Examine all security alerts:
+```bash
+jq 'select(.event_type=="alert") | {sig: .alert.signature, severity: .alert.metadata.signature_severity, src: .src_ip, dst: .dest_ip}' eve.json
 ```
 
 Count alerts by signature:
 ```bash
 jq -r 'select(.event_type=="alert") | .alert.signature' eve.json | sort | uniq -c | sort -rn
+```
+
+Count alerts by severity level:
+```bash
+jq -r 'select(.event_type=="alert") | .alert.metadata.signature_severity // "Unknown"' eve.json | sort | uniq -c | sort -rn
 ```
 
 #### 3. Top Talkers
@@ -270,11 +318,13 @@ jq 'select(.event_type=="flow") | {src: .src_ip, dst: .dest_ip, port: .dest_port
 ### Analysis Best Practices
 
 #### Alert Triage
+- **Prioritize by metadata severity**: Focus on "Critical" and "Major" alerts first using `alert.metadata.signature_severity`
 - Group alerts by signature to identify patterns
-- Check alert severity and category
+- Check if `alert.metadata.signature_severity` field exists before filtering
 - Examine the traffic context (what was the flow doing?)
 - Correlate with other events in the same flow_id
 - Verify if it's a true positive or false positive
+- **Do NOT rely solely on `alert.severity`** (numeric 1-3 field) - use metadata instead
 
 #### Threat Hunting
 - Look for unusual protocols or ports
@@ -304,6 +354,37 @@ The `jq` tool is essential for processing EVE JSON:
 ```bash
 jq 'select(.event_type=="alert")' eve.json
 ```
+
+### Filter by Alert Severity (IMPORTANT)
+
+**ALWAYS use `alert.metadata.signature_severity` for severity filtering, NOT `alert.severity`:**
+
+```bash
+# Critical alerts only
+jq 'select(.event_type=="alert" and .alert.metadata.signature_severity=="Critical")' eve.json
+
+# Critical OR Major (high priority)
+jq 'select(.event_type=="alert" and (.alert.metadata.signature_severity=="Critical" or .alert.metadata.signature_severity=="Major"))' eve.json
+
+# Safer pattern handling missing metadata (uses // operator for default)
+jq 'select(.event_type=="alert" and ((.alert.metadata.signature_severity // "") | test("Critical|Major")))' eve.json
+
+# Get all alerts with severity information
+jq 'select(.event_type=="alert") | {sig: .alert.signature, sev: .alert.metadata.signature_severity, src: .src_ip}' eve.json
+```
+
+**Why not use `alert.severity`?**
+- The numeric `alert.severity` field (1-3) is a legacy field and less reliable
+- `alert.metadata.signature_severity` contains contextually-rich severity levels
+- Metadata provides more accurate threat prioritization
+
+**Severity Levels**:
+- `"Critical"` - Immediate threat requiring urgent response
+- `"Major"` - Significant security concern
+- `"Minor"` - Lower priority issue
+- `"Informational"` - Context or policy violation
+
+**Note**: The `signature_severity` field may not always be present. Use the `//` operator to provide defaults and avoid errors.
 
 ### Extract Specific Fields
 ```bash
@@ -408,10 +489,25 @@ rm "$tmpfile"
 **User request**: "Look for suspicious activity in eve.json"
 
 **Workflow**:
-1. Check high-severity alerts: `jq 'select(.event_type=="alert" and .alert.severity<=2)' eve.json`
-2. Look for unusual DNS: `jq -r 'select(.event_type=="dns") | .dns.query.rrname' eve.json` (check for DGA-like patterns)
-3. Examine TLS certificates: `jq 'select(.event_type=="tls") | .tls.issuerdn' eve.json` (look for self-signed or suspicious CAs)
-4. Check for large data transfers: `jq 'select(.event_type=="flow" and .flow.bytes_toclient > 10000000)' eve.json`
+1. Check high-severity alerts using metadata:
+   ```bash
+   # Critical and Major alerts
+   jq 'select(.event_type=="alert" and ((.alert.metadata.signature_severity // "") | test("Critical|Major")))' eve.json
+   ```
+2. Look for unusual DNS:
+   ```bash
+   jq -r 'select(.event_type=="dns") | .dns.query.rrname' eve.json
+   ```
+   Check for DGA-like patterns (long random strings, unusual TLDs)
+3. Examine TLS certificates:
+   ```bash
+   jq 'select(.event_type=="tls") | .tls.issuerdn' eve.json
+   ```
+   Look for self-signed or suspicious CAs
+4. Check for large data transfers:
+   ```bash
+   jq 'select(.event_type=="flow" and .flow.bytes_toclient > 10000000)' eve.json
+   ```
 5. Present findings with evidence and context
 
 ## Part 6: Communication with Users
@@ -426,6 +522,7 @@ When presenting analysis results:
    - Protocol distribution
    - Alert counts and top signatures
    - Notable traffic patterns
+   - Determine internal network if possible
 
 3. **Show evidence**:
    - Include relevant JSON snippets
@@ -437,38 +534,43 @@ When presenting analysis results:
    - Are there threats or policy violations?
    - Is this normal or suspicious behavior?
 
-5. **Provide recommendations**:
-   - Suggest response actions for alerts
-   - Recommend further investigation steps
-   - Offer tuning suggestions for false positives
-
 ## Part 7: Security Best Practices
 
 **CRITICAL - Safe Temporary File Handling**:
 
 When processing PCAP files with `suricata-read`:
 
-1. **ALWAYS prefer pipes** over temporary files:
-   ```bash
-   # GOOD: Direct pipe to jq
-   suricata-read file.pcap | jq '.event_type' | sort | uniq -c
-   ```
+**1. For simple/single analyses - Use pipes**:
+```bash
+# GOOD: Direct pipe to jq
+suricata-read file.pcap | jq '.event_type' | sort | uniq -c
+```
 
-2. **If temporary files are needed**, use `mktemp`:
-   ```bash
-   # GOOD: Secure random filename
-   tmpfile=$(mktemp /tmp/suricata_XXXXXX.json)
-   suricata-read file.pcap > "$tmpfile"
-   jq '.' "$tmpfile"
-   rm "$tmpfile"
-   ```
+**2. For expensive processing or multiple analyses - Use `mktemp`**:
+```bash
+# GOOD: Secure random filename
+# Recommended when:
+# - Rules file has 100s+ signatures
+# - PCAP file is large (>100MB)
+# - Need to run 3+ different analyses
+tmpfile=$(mktemp /tmp/suricata_XXXXXX.json)
+suricata-read --container --rules-file extensive-rules.rules large.pcap > "$tmpfile"
 
-3. **NEVER use predictable filenames**:
-   ```bash
-   # BAD: Security vulnerability
-   suricata-read file.pcap > /tmp/filename_eve.json
-   suricata-read file.pcap > /tmp/pcap_output.json
-   ```
+# Run multiple analyses efficiently
+jq -r '.app_proto // "unknown"' "$tmpfile" | sort | uniq -c
+jq 'select(.event_type=="alert")' "$tmpfile" | wc -l
+jq 'select(.event_type=="flow")' "$tmpfile" | jq -s 'length'
+
+# ALWAYS clean up
+rm "$tmpfile"
+```
+
+**3. NEVER use predictable filenames**:
+```bash
+# BAD: Security vulnerability
+suricata-read file.pcap > /tmp/filename_eve.json
+suricata-read file.pcap > /tmp/pcap_output.json
+```
 
 **Why This Matters**:
 - Predictable filenames create race conditions
@@ -476,7 +578,15 @@ When processing PCAP files with `suricata-read`:
 - Attackers can exploit known filenames
 - Files may not be cleaned up properly
 
-**General Rule**: Only use temporary files if you need to run multiple different analyses on the same output. Otherwise, use pipes.
+**When to use temporary files**:
+✅ Large PCAP files (avoid expensive re-processing)
+✅ Extensive rulesets (processing is costly)
+✅ Multiple different analyses needed (efficiency)
+
+**When to use pipes**:
+✅ Single, simple analysis (most secure)
+✅ Small PCAP files (quick processing)
+✅ Few signatures (inexpensive to re-run)
 
 ## Part 8: Error Handling
 
@@ -497,8 +607,12 @@ Common issues and solutions:
 ## Quality Standards
 
 - **Always ask about rules**: When processing PCAP files, proactively search for and offer to load Suricata rules
-- **NEVER use predictable temporary filenames**: Use pipes or `mktemp` (see Security Best Practices section)
-- **Prefer pipes over files**: Use shell pipes whenever possible to avoid filesystem operations
+- **Use correct severity field**: Filter alerts by `alert.metadata.signature_severity` ("Critical", "Major"), NOT by `alert.severity` (1-3)
+- **Handle missing metadata gracefully**: Use `// ""` operator when filtering by metadata fields that may not exist
+- **NEVER use predictable temporary filenames**: Always use `mktemp` for secure random filenames
+- **Choose appropriate processing pattern**:
+  - **Pipes**: For simple/single analyses, small PCAPs, few signatures
+  - **Temporary files**: For large PCAPs (>100MB), extensive rulesets (100s+ sigs), or multiple analyses
 - **Always verify files exist** before processing
 - **Use appropriate mode** (`--container` when needed)
 - **Handle JSONL format correctly** (one JSON object per line)
@@ -521,23 +635,39 @@ Every time you process a PCAP file, follow this mandatory workflow:
    - If no rules found: Still ask if they have rules elsewhere
    - Explain why rules are valuable (detection, alerts, threat identification)
 
-3. **Execute with user's choice using SECURE PATTERNS**:
-   - With rules (using pipes):
-     ```bash
-     suricata-read --container --rules-file <path> <pcap> | jq '...'
-     ```
-   - Without rules (using pipes):
-     ```bash
-     suricata-read --container <pcap> | jq '...'
-     ```
-   - Only use temporary files if running multiple analyses (use `mktemp`):
-     ```bash
-     tmpfile=$(mktemp /tmp/suricata_XXXXXX.json)
-     suricata-read --container <pcap> > "$tmpfile"
-     # ... multiple analyses ...
-     rm "$tmpfile"
-     ```
+3. **Assess processing complexity and choose appropriate pattern**:
 
-This proactive approach ensures users don't miss the opportunity to enable detection capabilities and maximizes the value of the traffic inspection while maintaining security best practices.
+   **Use pipes for simple scenarios:**
+   - Small PCAP files
+   - Single analysis query
+   - Few signatures in rules file
+   ```bash
+   suricata-read --container --rules-file <path> <pcap> | jq '...'
+   ```
+
+   **Use temporary file for complex scenarios:**
+   - Large PCAP files (>100MB)
+   - Extensive rulesets (100s+ signatures)
+   - Multiple different analyses needed
+   ```bash
+   # Assess: "This PCAP is 500MB and the rules file has 2000 signatures.
+   # I'll use a temporary file to avoid expensive re-processing."
+   tmpfile=$(mktemp /tmp/suricata_XXXXXX.json)
+   suricata-read --container --rules-file <path> <pcap> > "$tmpfile"
+
+   # Run multiple analyses efficiently
+   jq -r '.app_proto // "unknown"' "$tmpfile" | sort | uniq -c
+   jq 'select(.event_type=="alert")' "$tmpfile" | ...
+   jq 'select(.event_type=="flow")' "$tmpfile" | ...
+
+   # ALWAYS clean up
+   rm "$tmpfile"
+   ```
+
+4. **Inform the user of your approach**:
+   - If using temp file: "I'm processing this large PCAP with extensive rules once and saving to a secure temporary file for efficiency."
+   - If using pipes: "I'll stream the results directly for this analysis."
+
+This proactive approach ensures users don't miss the opportunity to enable detection capabilities and maximizes the value of the traffic inspection while maintaining security best practices and efficiency.
 
 Your analysis helps users detect threats, investigate incidents, understand network behavior, validate detection rules, and improve security posture.
