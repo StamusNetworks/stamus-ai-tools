@@ -102,12 +102,39 @@ suricata-read --container <pcap_file>
 - Provides security context to the traffic analysis
 - Helps identify malicious or suspicious activity
 
-#### Output
+#### Output and Safe Processing
 
-`suricata-read` outputs EVE JSON in JSONL format (one JSON object per line) to stdout. You can:
-- Pipe it to analysis tools: `suricata-read file.pcap | jq '.event_type' | sort | uniq -c`
-- Save it to a file: `suricata-read file.pcap > output.json`
-- Process it directly in memory for analysis
+`suricata-read` outputs EVE JSON in JSONL format (one JSON object per line) to stdout.
+
+**IMPORTANT - Safe Processing Patterns**:
+
+1. **Prefer pipes over temporary files** (most secure):
+   ```bash
+   suricata-read file.pcap | jq '.event_type' | sort | uniq -c
+   ```
+
+2. **If you must save output, use secure temporary files**:
+   ```bash
+   # SECURE: Use mktemp for random, secure filename
+   output_file=$(mktemp /tmp/suricata_XXXXXX.json)
+   suricata-read file.pcap > "$output_file"
+   jq '.' "$output_file"
+   rm "$output_file"  # Clean up when done
+   ```
+
+3. **NEVER use predictable filenames** (UNSAFE):
+   ```bash
+   # UNSAFE - DO NOT DO THIS
+   suricata-read file.pcap > /tmp/pcap_eve.json
+   suricata-read file.pcap > /tmp/filename_eve.json
+   ```
+   This creates security vulnerabilities (race conditions, file collisions, disclosure).
+
+**Best Practices**:
+- Use pipes whenever possible to avoid filesystem operations
+- If temporary storage is needed, use `mktemp` for secure random filenames
+- Always clean up temporary files when done
+- Consider using process substitution: `jq '.' <(suricata-read file.pcap)`
 
 ## Part 2: EVE JSON Format
 
@@ -319,22 +346,50 @@ jq 'select(.flow_id==1234567890)' eve.json
 2. Ask user: "I found rules.rules in the current directory. Would you like me to load it for detection analysis? This will help identify threats in the traffic."
 3. User responds (yes/no)
 4. Check if Suricata is installed, use `--container` if not
-5. Run with or without rules based on user's choice:
-   - With rules: `suricata-read --container --rules-file rules.rules traffic.pcap > output.json`
-   - Without rules: `suricata-read --container traffic.pcap > output.json`
-6. Count protocols: `jq -r '.app_proto // "unknown"' output.json | sort | uniq -c | sort -rn`
-7. If rules were loaded, also check for alerts: `jq -r 'select(.event_type=="alert") | .alert.signature' output.json | sort | uniq -c`
-8. Present summary: "The PCAP contains X HTTP flows, Y TLS connections, Z DNS queries..." (and alert summary if rules were used)
+5. Run with or without rules based on user's choice using **PIPES** (secure):
+   - Count protocols directly:
+     ```bash
+     suricata-read --container traffic.pcap | jq -r '.app_proto // "unknown"' | sort | uniq -c | sort -rn
+     ```
+   - If rules were loaded, also check alerts:
+     ```bash
+     suricata-read --container --rules-file rules.rules traffic.pcap | jq -r 'select(.event_type=="alert") | .alert.signature' | sort | uniq -c
+     ```
+6. Present summary: "The PCAP contains X HTTP flows, Y TLS connections, Z DNS queries..." (and alert summary if rules were used)
+
+**Alternative with temporary file** (only if multiple analyses are needed):
+```bash
+# Create secure temporary file
+tmpfile=$(mktemp /tmp/suricata_XXXXXX.json)
+suricata-read --container traffic.pcap > "$tmpfile"
+
+# Run multiple analyses
+jq -r '.app_proto // "unknown"' "$tmpfile" | sort | uniq -c | sort -rn
+jq -r 'select(.event_type=="alert") | .alert.signature' "$tmpfile" | sort | uniq -c
+
+# Clean up
+rm "$tmpfile"
+```
 
 ### Example 2: Test Rules Against PCAP
 
 **User request**: "Test my-rules.rules against sample.pcap"
 
-**Workflow**:
-1. Run: `suricata-read --container --rules-file my-rules.rules sample.pcap > output.json`
-2. Filter alerts: `jq 'select(.event_type=="alert")' output.json`
-3. Count by signature: `jq -r 'select(.event_type=="alert") | .alert.signature' output.json | sort | uniq -c`
-4. Report which rules triggered and on what traffic
+**Workflow** (using secure pipes):
+1. Count alerts by signature:
+   ```bash
+   suricata-read --container --rules-file my-rules.rules sample.pcap | \
+     jq -r 'select(.event_type=="alert") | .alert.signature' | \
+     sort | uniq -c | sort -rn
+   ```
+2. Get detailed alert info:
+   ```bash
+   suricata-read --container --rules-file my-rules.rules sample.pcap | \
+     jq 'select(.event_type=="alert") | {sig: .alert.signature, src: .src_ip, dst: .dest_ip}'
+   ```
+3. Report which rules triggered and on what traffic
+
+**Note**: If you need to run multiple different analyses, use `mktemp` once and reuse the file, then clean up.
 
 ### Example 3: Investigate EVE Log Alerts
 
@@ -387,7 +442,43 @@ When presenting analysis results:
    - Recommend further investigation steps
    - Offer tuning suggestions for false positives
 
-## Part 7: Error Handling
+## Part 7: Security Best Practices
+
+**CRITICAL - Safe Temporary File Handling**:
+
+When processing PCAP files with `suricata-read`:
+
+1. **ALWAYS prefer pipes** over temporary files:
+   ```bash
+   # GOOD: Direct pipe to jq
+   suricata-read file.pcap | jq '.event_type' | sort | uniq -c
+   ```
+
+2. **If temporary files are needed**, use `mktemp`:
+   ```bash
+   # GOOD: Secure random filename
+   tmpfile=$(mktemp /tmp/suricata_XXXXXX.json)
+   suricata-read file.pcap > "$tmpfile"
+   jq '.' "$tmpfile"
+   rm "$tmpfile"
+   ```
+
+3. **NEVER use predictable filenames**:
+   ```bash
+   # BAD: Security vulnerability
+   suricata-read file.pcap > /tmp/filename_eve.json
+   suricata-read file.pcap > /tmp/pcap_output.json
+   ```
+
+**Why This Matters**:
+- Predictable filenames create race conditions
+- Multiple users can overwrite each other's data
+- Attackers can exploit known filenames
+- Files may not be cleaned up properly
+
+**General Rule**: Only use temporary files if you need to run multiple different analyses on the same output. Otherwise, use pipes.
+
+## Part 8: Error Handling
 
 Common issues and solutions:
 
@@ -400,12 +491,14 @@ Common issues and solutions:
 ### EVE Log Analysis
 - **Invalid JSON**: Check if file is properly formatted JSONL
 - **Empty file**: Verify the log file contains data
-- **Large files**: Process in chunks or use streaming
+- **Large files**: Process in chunks or use streaming with pipes
 - **Missing fields**: Not all events have all fields; check existence before accessing
 
 ## Quality Standards
 
 - **Always ask about rules**: When processing PCAP files, proactively search for and offer to load Suricata rules
+- **NEVER use predictable temporary filenames**: Use pipes or `mktemp` (see Security Best Practices section)
+- **Prefer pipes over files**: Use shell pipes whenever possible to avoid filesystem operations
 - **Always verify files exist** before processing
 - **Use appropriate mode** (`--container` when needed)
 - **Handle JSONL format correctly** (one JSON object per line)
@@ -428,10 +521,23 @@ Every time you process a PCAP file, follow this mandatory workflow:
    - If no rules found: Still ask if they have rules elsewhere
    - Explain why rules are valuable (detection, alerts, threat identification)
 
-3. **Execute with user's choice**:
-   - With rules: `suricata-read --container --rules-file <path> <pcap>`
-   - Without rules: `suricata-read --container <pcap>`
+3. **Execute with user's choice using SECURE PATTERNS**:
+   - With rules (using pipes):
+     ```bash
+     suricata-read --container --rules-file <path> <pcap> | jq '...'
+     ```
+   - Without rules (using pipes):
+     ```bash
+     suricata-read --container <pcap> | jq '...'
+     ```
+   - Only use temporary files if running multiple analyses (use `mktemp`):
+     ```bash
+     tmpfile=$(mktemp /tmp/suricata_XXXXXX.json)
+     suricata-read --container <pcap> > "$tmpfile"
+     # ... multiple analyses ...
+     rm "$tmpfile"
+     ```
 
-This proactive approach ensures users don't miss the opportunity to enable detection capabilities and maximizes the value of the traffic inspection.
+This proactive approach ensures users don't miss the opportunity to enable detection capabilities and maximizes the value of the traffic inspection while maintaining security best practices.
 
 Your analysis helps users detect threats, investigate incidents, understand network behavior, validate detection rules, and improve security posture.
