@@ -1,10 +1,15 @@
 # Suricata Analyze Plugin Instructions
 
-This plugin provides a unified skill for inspecting network traffic using Suricata tools, supporting both PCAP file analysis and EVE JSON log analysis in a single workflow.
+This plugin provides specialized skills for analyzing network traffic using Suricata tools, supporting PCAP file analysis, EVE JSON log analysis, and threat hunting.
 
-## When to Use This Plugin
+## Available Skills
 
-Automatically invoke the `suricata-analyze:inspect` skill when users:
+### 1. `suricata-analyze:inspect` - General Traffic Analysis
+### 2. `suricata-analyze:hunt` - Threat Hunting
+
+## When to Use Each Skill
+
+### Use `suricata-analyze:inspect` when users want general analysis:
 
 ### Network Traffic Analysis Requests
 - User provides a PCAP file and wants to analyze it
@@ -43,7 +48,30 @@ Automatically invoke the `suricata-analyze:inspect` skill when users:
 **General Network Analysis:**
 - "Analyze this network traffic file"
 - "What's in this capture?"
-- "Investigate suspicious activity in [file]"
+
+### Use `suricata-analyze:hunt` when users want threat hunting:
+
+**Threat Hunting Requests:**
+- User asks to hunt for threats or malicious activity
+- User wants to find C2 (Command & Control) traffic
+- User asks about data exfiltration or suspicious uploads
+- User mentions looking for compromised hosts
+- User wants to detect beaconing or malware communication
+- User asks to find suspicious user agents or domains
+- User requests hunting for specific threat patterns
+- User wants a security assessment of traffic
+
+**Examples:**
+- "Hunt for threats in this PCAP"
+- "Look for malicious activity in traffic.pcap"
+- "Find any C2 communication in eve.json"
+- "Hunt for compromised hosts in this capture"
+- "Look for data exfiltration attempts"
+- "Find suspicious user agents and domains"
+- "Hunt for beaconing activity"
+- "Are there any infected hosts in this traffic?"
+- "Look for malware communication patterns"
+- "Perform threat hunting on sample.pcap"
 
 ## Key Concepts
 
@@ -126,19 +154,48 @@ This plugin complements the `suricata-rules` plugin:
 3. Summarize findings: protocol distribution, top talkers, services
 
 ### Workflow 4: Threat Hunting
-1. User provides EVE logs or PCAP from a suspect system
-2. Use `suricata-analyze:inspect` to hunt for indicators
-3. Examine DNS queries, TLS certificates, large transfers, suspicious patterns
-4. Report findings with evidence
+1. User provides EVE logs or PCAP and wants to hunt for threats
+2. Use `suricata-analyze:hunt` for systematic threat hunting
+3. Execute 10+ hunting queries covering C2, exfiltration, suspicious domains, etc.
+4. Generate comprehensive threat hunting report with findings and recommendations
+
+### Workflow 5: Combined Analysis and Hunting
+1. User provides traffic and wants both analysis and hunting
+2. First use `suricata-analyze:inspect` to understand the traffic baseline
+3. Then use `suricata-analyze:hunt` to find threats
+4. Cross-reference findings from both approaches
 
 ## Proactive Behavior
 
+### For General Analysis:
 When users mention:
-- PCAP files, packet captures, or network traffic files → Invoke `suricata-analyze:inspect`
-- EVE logs, eve.json, Suricata logs, or JSON logs → Invoke `suricata-analyze:inspect`
-- Network traffic analysis → Invoke `suricata-analyze:inspect`
-- Suricata alerts or events → Invoke `suricata-analyze:inspect`
-- Testing rules against traffic → Invoke `suricata-analyze:inspect`
-- Protocol analysis, traffic investigation → Invoke `suricata-analyze:inspect`
+- PCAP files, packet captures, or network traffic files (general) → `suricata-analyze:inspect`
+- EVE logs, eve.json, Suricata logs (general) → `suricata-analyze:inspect`
+- Protocol distribution, traffic baseline → `suricata-analyze:inspect`
+- Suricata alerts or events (investigation) → `suricata-analyze:inspect`
+- Testing rules against traffic → `suricata-analyze:inspect`
 
-Always prefer using this specialized skill over attempting to analyze network traffic or logs without it, as it contains essential domain knowledge, best practices, and structured analysis approaches for both PCAP and EVE JSON formats.
+### For Threat Hunting:
+When users mention:
+- Hunting, finding threats, malicious activity → `suricata-analyze:hunt`
+- C2, command and control, beaconing → `suricata-analyze:hunt`
+- Data exfiltration, suspicious uploads → `suricata-analyze:hunt`
+- Compromised hosts, infected machines → `suricata-analyze:hunt`
+- Suspicious user agents, domains, TLDs → `suricata-analyze:hunt`
+- Security assessment, threat detection → `suricata-analyze:hunt`
+
+### Skill Differences:
+
+**`inspect`**: General-purpose analysis
+- Protocol distribution
+- Alert investigation
+- Flow statistics
+- Ad-hoc queries
+
+**`hunt`**: Structured threat hunting
+- 10 systematic hunting queries
+- Threat-focused (C2, exfiltration, DGA, etc.)
+- Comprehensive report generation
+- Security-specific indicators
+
+Always prefer using these specialized skills over attempting to analyze network traffic or logs without them, as they contain essential domain knowledge, best practices, and structured analysis approaches.

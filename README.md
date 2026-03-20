@@ -41,9 +41,9 @@ A comprehensive Claude Code plugin for working with Suricata network intrusion d
 
 ### Suricata Analyze Plugin for Claude Code
 
-A powerful Claude Code plugin for inspecting network traffic using Suricata tools, with unified support for both PCAP files and EVE JSON logs.
+A powerful Claude Code plugin for analyzing network traffic using Suricata tools, with support for both PCAP files and EVE JSON logs. Includes general traffic analysis and specialized threat hunting.
 
-**Skill:**
+**Skills:**
 
 - **inspect** - Unified network traffic inspection for PCAP files and EVE JSON logs
   - Automatically detects input type (PCAP or EVE JSON)
@@ -51,18 +51,33 @@ A powerful Claude Code plugin for inspecting network traffic using Suricata tool
   - Inspects EVE JSON logs directly for security events and traffic patterns
   - Supports protocol analysis (HTTP, TLS, DNS, SMB, SSH, etc.)
   - Optional rules file integration for detection testing with PCAPs
+  - Alert triage and incident investigation
   - Container mode support for environments without local Suricata installation
+
+- **hunt** - Systematic threat hunting in network traffic
+  - 10+ structured hunting queries for detecting threats
+  - C2 (Command & Control) communication detection
+  - Data exfiltration identification (large uploads, suspicious transfers)
+  - Suspicious user agents and direct IP connections
+  - Malicious TLD detection (.xyz, .top, etc.)
+  - DNS tunneling and DGA (Domain Generation Algorithm) identification
+  - Beaconing detection for persistent malware
+  - TLS/SSL anomalies and self-signed certificates
+  - Internal reconnaissance and scanning detection
+  - Comprehensive threat hunting report generation
 
 **Features:**
 
-- Unified workflow for PCAP and EVE log inspection
+- Unified workflow for PCAP and EVE log analysis
 - Comprehensive PCAP processing with `suricata-read`
 - EVE log parsing and security event investigation
 - Protocol distribution and traffic pattern analysis
 - Alert triage and incident response support
-- Threat hunting capabilities (DNS, TLS, large transfers, suspicious patterns)
+- Systematic threat hunting with 10+ detection methods
+- Security-focused analysis (C2, exfiltration, malware indicators)
 - jq-based filtering and aggregation examples
 - Support for both containerized and local Suricata installations
+- Secure temporary file handling with `mktemp`
 
 ## Installation
 
@@ -176,6 +191,42 @@ Test my-rules.rules against sample.pcap
 ```
 
 The AI agent will run `suricata-read` with the rules file, generate alerts, and report which signatures triggered.
+
+### Hunting for Threats
+
+Use the `hunt` skill to systematically search for malicious activity and threats. For example in Claude Code:
+
+**Threat Hunting in PCAP:**
+
+```
+/suricata-analyze:hunt
+
+Hunt for threats in suspicious-traffic.pcap
+```
+
+The AI agent will execute 10+ systematic hunting queries to detect C2 communication, data exfiltration, malicious domains, beaconing, and other threat indicators. A comprehensive threat hunting report will be generated with findings, affected hosts, and flow IDs for investigation.
+
+**Threat Hunting in EVE Logs:**
+
+```
+/suricata-analyze:hunt
+
+Look for compromised hosts in eve.json
+```
+
+The AI agent will hunt for indicators of compromise including suspicious user agents, connections to malicious TLDs, large data transfers, DNS anomalies, and beaconing patterns.
+
+**What the Hunt Skill Detects:**
+- C2 (Command & Control) communication patterns
+- Data exfiltration attempts (large uploads)
+- Suspicious user agents connecting to IP addresses
+- Connections to high-risk TLDs (.xyz, .top, .cc, etc.)
+- DNS tunneling and DGA domains
+- Beaconing activity
+- TLS/SSL anomalies (self-signed certs, IP-based connections)
+- Internal reconnaissance and scanning
+- HTTP method anomalies and web attacks
+- Protocol anomalies and unusual port usage
 
 ## Best Practices
 
