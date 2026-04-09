@@ -22,7 +22,6 @@ Key ideas:
 - `proto` is application layer (e.g., http, tls, smb) or is transport layer (e.g., tcp, udp). Always set application layer in second position of the signature when possible.
 - `sid` is a unique rule id.
 - `rev` is the rule revision.
-- Use `flow:established,to_server` (or similar) to constrain direction/state.
 
 ## Best practices
 
@@ -75,13 +74,14 @@ Every signature you write MUST adhere to these non-negotiable rules:
 - **Sticky buffers set context**: Remember sticky buffers allow multiple match conditions on the same data
 - **Prefer non-user-input**: Match on reliable data (file content) rather than user-controllable data (file names)
 - **Use efficient keywords**: Always check if a specialized keyword exists for the concept you're detecting
-- **Flow direction**: Use `flow:established,to_server` or similar to constrain connection state and direction
+- **Flow direction**: Use `flow:to_server` or similar to constrain connection state and direction
 
 ## Specialized Signature Techniques
 
 ### Domain Matching
 - **Domain transform**: When matching domain names, use the `domain` transform for proper normalization
 - **Hostname vs domain**: Do NOT use domain transform for hostname matching (different use case)
+- **Sub domain match**: You can either use the domain or dotprefix transform
 
 ### Multi-Signature Logic with Flowbits
 - **State tracking**: Use flowbits to create conditional logic across multiple signatures
