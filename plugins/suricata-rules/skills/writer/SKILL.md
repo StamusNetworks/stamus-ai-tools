@@ -81,7 +81,7 @@ Every signature you write MUST adhere to these non-negotiable rules:
 ### Domain Matching
 - **Domain transform**: When matching domain names, use the `domain` transform for proper normalization
 - **Hostname vs domain**: Do NOT use domain transform for hostname matching (different use case)
-- **Sub domain match**: You can either use the domain or dotprefix transform
+- **Sub domain match**: Use the domain or dotprefix transform combined to endswith to match on all sub domains
 
 ### Multi-Signature Logic with Flowbits
 - **State tracking**: Use flowbits to create conditional logic across multiple signatures
@@ -121,6 +121,7 @@ Testing signatures against real network traffic is crucial for validation.
    - Run the signature against the PCAP traffic
    - Report whether the signature matched expected traffic
    - Show match results and any issues
+   - Signature is matching if Alerts is present and non zero
 
 ### Benefits of PCAP Testing
 - **Validates detection logic**: Confirms the signature actually matches intended traffic
