@@ -34,6 +34,11 @@
       "name": "suricata-rules",
       "source": "./plugins/suricata-rules",
       "description": "Write, explain, and validate Suricata network intrusion detection signatures"
+    },
+    {
+      "name": "suricata-analyze",
+      "source": "./plugins/suricata-analyze",
+      "description": "Analyze PCAP file with Suricata or explain EVE json file"
     }
   ]
 }
