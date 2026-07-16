@@ -123,3 +123,21 @@ Use @hunt-dns-tunnel skill for structured threat hunting methodologies for detec
 - DNS exfiltration
 - DNS Command and Control (C2)
 - DNS generic detection of dnscat / iodine / TXT
+
+Use @hunt-smb-dcerpc skill for structured threat hunting methodologies for detecting:
+- PsExec-style admin-share (C$) payload writes
+- Credential brute-force / password spray (SESSION_SETUP logon failures)
+- Share enumeration
+- DCSync (DRSUAPI DRSGetNCChanges)
+- NETLOGON abuse (Zerologon-class)
+- RPC coercion (PetitPotam/PrinterBug/DFSCoerce)
+- Wndpoint-mapper recon
+- Service-control and scheduled-task lateral movement
+- SMB2 named-pipe hammering
+
+Use @hunt-tls-c2 skill for structured threat hunting methodologies for detecting:
+- High-entropy / random-alnum SNI
+- DGA-hex label + cheap TLS TLD
+- TLS C2 beaconing and exfiltration
+- Word-DGA CN on junk TLD
+
