@@ -1,8 +1,8 @@
 ---
 name: hunt-tls-c2
-description: Hunt for malicious TLS in Suricata eve.json (event_type:tls). Detects DGA / high-entropy / word-list SNI, IP-literal and malformed SNI, high-abuse TLDs (.xyz/.cc/.cyou/.sbs/.cfd/.top/.online/.icu/…), IP-literal and invalid cert Subject/Issuer CN, self-signed and OpenSSL-default certificates (subject==issuer, "Internet Widgits", "Default City", CN=localhost/0.0.0.0), then correlates each suspicious SNI to event_type:flow via flow_id to surface long-lived C2 sessions (flow.age > 5 min) and repetitive single-destination beacons, and pivots on shared JA3/JA4 fingerprints. Prints a structured report with an evidence table. Use when asked to hunt malicious/C2/DGA TLS, find suspicious SNI or certificates, or triage HTTPS beaconing in a Suricata log.
-argument-hint: [path to eve.json, default: eve.json in current directory] [output file, default: tls-hunt-report.txt alongside eve.json]
-allowed-tools: Bash, Read, Write, Glob
+description: 'Hunt for malicious TLS in Suricata eve.json (event_type:tls). Detects DGA / high-entropy / word-list SNI, IP-literal and malformed SNI, high-abuse TLDs (.xyz/.cc/.cyou/.sbs/.cfd/.top/.online/.icu/etc.), IP-literal and invalid cert Subject/Issuer CN, self-signed and OpenSSL-default certificates (subject==issuer, "Internet Widgits", "Default City", CN=localhost/0.0.0.0), then correlates each suspicious SNI to event_type:flow via flow_id to surface long-lived C2 sessions (flow.age > 5 min) and repetitive single-destination beacons, and pivots on shared JA3/JA4 fingerprints. Prints a structured report with an evidence table. Use when asked to hunt malicious/C2/DGA TLS, find suspicious SNI or certificates, or triage HTTPS beaconing in a Suricata log.'
+argument-hint: "[path to eve.json, default: eve.json in current directory] [output file, default: tls-hunt-report.txt alongside eve.json]"
+allowed-tools: "Bash, Read, Write, Glob"
 ---
 
 # Hunt Malicious TLS / C2 in Suricata eve.json

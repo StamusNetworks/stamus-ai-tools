@@ -1,8 +1,8 @@
 ---
 name: hunt-dns-tunnel
-description: Hunt for DNS tunneling in Suricata eve.json. Detects two archetypes — (1) TXT base64 file exfiltration with sequential chunked payloads, (2) dnscat2-style C2 with hex-encoded QNAME subdomain labels and multi-type channel rotation (MX/TXT/CNAME). Reconstructs and decodes exfiltrated payloads or extracts raw session bytes, looks up flow sizes from event_type:flow, and prints a structured report with an event table. Use when asked to find suspicious DNS, detect DNS tunneling, or decode DNS-tunneled data from a Suricata log file.
-argument-hint: [path to eve.json, default: eve.json in current directory] [output file, default: tunneled_payload.txt alongside eve.json]
-allowed-tools: Bash, Read, Write, Glob
+description: "Hunt for DNS tunneling in Suricata eve.json. Detects two archetypes - (1) TXT base64 file exfiltration with sequential chunked payloads, (2) dnscat2-style C2 with hex-encoded QNAME subdomain labels and multi-type channel rotation (MX/TXT/CNAME). Reconstructs and decodes exfiltrated payloads or extracts raw session bytes, looks up flow sizes from event_type:flow, and prints a structured report with an event table. Use when asked to find suspicious DNS, detect DNS tunneling, or decode DNS-tunneled data from a Suricata log file."
+argument-hint: "[path to eve.json, default: eve.json in current directory] [output file, default: tunneled_payload.txt alongside eve.json]"
+allowed-tools: "Bash, Read, Write, Glob"
 ---
 
 # Hunt DNS Tunneling in Suricata eve.json
